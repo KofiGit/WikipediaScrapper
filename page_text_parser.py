@@ -3,14 +3,14 @@ from messages import no_lines_message, not_found_message
 
 
 # simple switch implementation in version 3.9, in 3.10 is possible to use match - case
-def get_print_page_text(pageType, soup, articleName):
+def get_print_page_text(page_type, soup, article_name):
     text = ''
-    if pageType == 'Search':
-        possibleArticles = parseSearchText(soup)
+    if page_type == 'Search':
+        possible_articles = parse_search_page(soup)
         # Create final CLI message
-        text = not_found_message(articleName, possibleArticles)
-    elif pageType == 'Article':
-        text = parseArticleText(soup)
+        text = not_found_message(article_name, possible_articles)
+    elif page_type == 'Article':
+        text = parse_article_page(soup)
     else:
         text = 'Program nenašel správný parser pro stránku.'
 
@@ -26,32 +26,32 @@ def remove_scripts(soup):
 
 def get_list_of_text_lines(text):
     # Preparing list of paragraph lines with text
-    lineList = []
+    line_list = []
     for x in text:
         line = x.getText()
         if line != '\n':
             newLine = re.sub('\[(.*?)\]', '', line)
-            lineList.append(newLine.strip())
+            line_list.append(newLine.strip())
 
-    return lineList
+    return line_list
 
 
 # Parse text from article page
-def parseArticleText(soup):
+def parse_article_page(soup):
     soup = remove_scripts(soup)
 
     # Get all paragraph text
     text = soup.findAll('p')
 
     # Get Lines
-    lineList = get_list_of_text_lines(text)
+    line_list = get_list_of_text_lines(text)
 
     # If list is empty something went wrong
-    if len(lineList) < 1:
+    if len(line_list) < 1:
         return no_lines_message()
 
     # Take first 3 lines of text and remove leading and trailing space on each of them
-    lines = (line.strip() for line in lineList[:3])
+    lines = (line.strip() for line in line_list[:3])
     # break multi-headlines into a line each
     chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
     # Join lines to one text with new line between them
@@ -61,22 +61,22 @@ def parseArticleText(soup):
 
 
 # Parse text from search page
-def parseSearchText(soup):
+def parse_search_page(soup):
     soup = remove_scripts(soup)
 
     # Get all links to possible articles
     arts = soup.find_all("div", {"class": "mw-search-result-heading"})
 
     # Get Lines
-    lineList = get_list_of_text_lines(arts)
+    line_list = get_list_of_text_lines(arts)
 
     # If list is empty something went wrong
-    if len(lineList) < 1:
+    if len(line_list) < 1:
         return no_lines_message()
 
-    # Take first 3 lines of text and remove leading and trailing space on each of them
-    lines = (line.strip() for line in lineList)
+    # Take lines from search
+    lines = (line.strip() for line in line_list)
     # Join lines to one text with new line between them
-    possibleArticles = '\n'.join(line for line in lines)
+    possible_articles = '\n'.join(line for line in lines)
 
-    return possibleArticles
+    return possible_articles
